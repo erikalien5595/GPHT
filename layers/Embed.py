@@ -206,9 +206,12 @@ class PatchEmbedding(nn.Module):
     def encode_patch(self, x):
         n_vars = x.shape[1]
         x = self.patch(x)
+        print('x11111111', x.shape)
         x = torch.reshape(x, (x.shape[0] * x.shape[1], x.shape[2], x.shape[3]))
+        print('x', x.shape)
         # Input encoding
         x = self.value_embedding(x)
+        print('y', x.shape)
         return x, n_vars
 
     def pos_and_dropout(self, x):

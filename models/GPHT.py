@@ -50,23 +50,29 @@ class GPHTBlock(nn.Module):
 
     def forward(self, x_enc):
         # do patching and embedding
-        x_enc = x_enc.permute(0, 2, 1)
+        x_enc = x_enc.permute(0, 2, 1)  # (B, 1, 336)
         # u: [bs * nvars x patch_num x d_model]
-        x_enc = self.down_sample(x_enc)
+        x_enc = self.down_sample(x_enc)  # (B, 1, 42), (B, 1, 84), (B, 1, 168), (B, 1, 336)
+        print('down', x_enc.shape)
         enc_out, n_vars = self.patch_embedding.encode_patch(x_enc)
+        print('patch', enc_out.shape)
         enc_out = self.patch_embedding.pos_and_dropout(enc_out)
+        print('patch_enc_out', enc_out.shape)
 
         # Encoder
         # z: [bs * nvars x patch_num x d_model]
         enc_out, attns = self.encoder(enc_out)
+        print('enc_out', enc_out.shape)
         # z: [bs x nvars x patch_num x d_model]
         enc_out = torch.reshape(
             enc_out, (-1, n_vars, enc_out.shape[-2], enc_out.shape[-1]))
+        print('enc_out2', enc_out.shape)
 
         bs = enc_out.shape[0]
 
         # Decoder
         dec_out = self.forecast_head(enc_out).reshape(bs, n_vars, -1)  # z: [bs x nvars x seq_len]
+        print('dec_out', dec_out.shape)
         return dec_out.permute(0, 2, 1)
 
 
@@ -90,8 +96,10 @@ class Model(nn.Module):
         dec_out = 0
 
         for i, enc in enumerate(self.encoders):
+            # print(x_enc.shape)
             out_enc = enc(x_enc)
             dec_out += out_enc[:, -seq_len:, :]
+            print(dec_out.shape)
             ar_roll = torch.zeros((x_enc.shape[0], self.configs.token_len, x_enc.shape[2])).to(x_enc.device)
             ar_roll = torch.cat([ar_roll, out_enc], dim=1)[:, :-self.configs.token_len, :]
             x_enc = x_enc - ar_roll

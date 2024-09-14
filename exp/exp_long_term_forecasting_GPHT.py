@@ -145,6 +145,7 @@ class Exp_Long_Term_Forecast_GPHT(Exp_Basic):
 
                     else:
                         outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
+                        print('output', outputs.shape)
                 outputs = outputs[:, :, f_dim:]
                 batch_y = torch.cat(
                     [batch_x[:, self.args.token_len:, :], batch_y[:, -self.args.token_len:, f_dim:].to(self.device)],
